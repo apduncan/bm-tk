@@ -56,12 +56,18 @@ process EXTRACT_CALLS {
 
 workflow {
     Channel.fromPath(params.bams) |
+        view |
         // Remove files we are not interested in based on terms in name
         filter { !(it =~/(fail)|(subread)|(scrap)|(unassigned)/) } |
+        view |
         CHECK_KINETICS |
         view |
         filter { it[1] == "TRUE" } |
+        view |
         map { it[0] } |
+        view |
         PREDICT_FIBERTOOLS |
-        EXTRACT_CALLS
+        view |
+        EXTRACT_CALLS |
+        view
 }
