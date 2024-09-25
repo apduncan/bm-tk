@@ -1,5 +1,5 @@
 # bm-tk
-Simple pipeline for predicting bacterial base modification from PacBio HiFi
+Simple pipeline for predicting bacterial **b**ase **m**odification from PacBio HiFi
 sequencing data with kinetics tags.
 
 Currently, the pipeline will
