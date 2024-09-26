@@ -6,7 +6,6 @@ process CHECK_KINETICS {
         tuple path("*.bam", arity: 1, includeInputs: true), env(HAS_KINETICS)
     script:
         """
-        samtools view $unmodBam
         HAS_KINETICS=\$([[ ! -z \$(samtools view $unmodBam | head -1 | grep -E '((fi)|(ri)|(fp)|(rp)):') ]] && echo TRUE || echo FALSE)
         """
     stub:

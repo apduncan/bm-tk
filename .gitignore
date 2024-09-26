@@ -1,3 +1,5 @@
 work/
 test_data/
 output/
+.nextflow*
+.nextflow/
