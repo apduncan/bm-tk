@@ -17,8 +17,9 @@ def expectedOutputs(inBam) {
         inBam.getParent().toString(),
         "fibertools_predict.${inBam.getName()}.calls.tsv.gz"
     )
+
     return (
-        (params.extract_calls && Files.exists(calls)) && 
+        !(params.extract_calls && !Files.exists(calls)) && 
         Files.exists(ftPredict)
     )
 }
