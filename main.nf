@@ -90,12 +90,18 @@ process EXTRACT_CALLS {
         return outPath
     }
     script:
+        // This process was failing due to memory, but not giving a failure
+        // exit code. To ensure failure is noticed, output to a temp file
+        // before moving to expected output
         """
+        echo "Extracting calls with modkit"
         modkit extract calls \
         -t ${task.cpus} \
         $modBam \
         - \
-        | gzip > ${modBam}.calls.tsv.gz
+        | gzip > tmp.tsv.gz
+        echo "Moving calls table to output location"
+        mv tmp.calls.tsv.gz ${modBam}.calls.tsv.gz
         """
 }
 
@@ -138,6 +144,7 @@ workflow {
         
     def predictedChannel = inputBranches.process |
         CHECK_KINETICS |
+        view |
         filter { it[1] == "TRUE" } |
         map { it[0] } |
         PREDICT_FIBERTOOLS
