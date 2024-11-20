@@ -2,7 +2,7 @@ import java.nio.file.Paths
 import java.nio.file.Files
 import java.util.stream.Collectors
 
-def pathMap = [:]
+pathMap = [:]
 
 def expectedOutputs(inBam) {
     // Determine whether the expected outputs for a given input file exist
@@ -22,6 +22,20 @@ def expectedOutputs(inBam) {
         !(params.extract_calls && !Files.exists(calls)) && 
         Files.exists(ftPredict)
     )
+}
+
+def predictionLocation(inBam) {
+    // Create the expected output location of the modification predictions
+    def inFullPath = pathMap.get(inBam.getName())
+    def outPath = Paths.get(
+        inFullPath.getParent().toString(),
+        "fibertools_predict.${inBam.getName()}"
+    )
+    return outPath
+}
+
+def predictionExists(inBam) {
+    return Files.exists(inBam)
 }
 
 process CHECK_KINETICS {
@@ -101,7 +115,7 @@ process EXTRACT_CALLS {
         - \
         | gzip > tmp.tsv.gz
         echo "Moving calls table to output location"
-        mv tmp.calls.tsv.gz ${modBam}.calls.tsv.gz
+        mv tmp.tsv.gz ${modBam}.calls.tsv.gz
         """
 }
 
@@ -141,16 +155,28 @@ workflow {
                 .collect(Collectors.joining("\n")) 
             println "Not processed due to output existing:\n${nlList}"
         }
-        
-    def predictedChannel = inputBranches.process |
+
+    // Split inputs into those which need predictions, and those which
+    // already have output predictions
+    def hasKinetics = inputBranches.process |
         CHECK_KINETICS |
-        view |
         filter { it[1] == "TRUE" } |
         map { it[0] } |
+        branch {
+            done: predictionExists(it)
+            process: true
+        }
+    
+    // Make new predictions
+    def newPredictions = hasKinetics.process |
         PREDICT_FIBERTOOLS
+    def extPrediction = hasKinetics.done |
+        view |
+        map { predictionLocation(it) } |
+        view
 
     if(params.extract_calls) {
-        predictedChannel |
+        newPredictions.mix(extPrediction) |
         EXTRACT_CALLS
     }
 }
