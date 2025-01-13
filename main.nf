@@ -35,7 +35,7 @@ def predictionLocation(inBam) {
 }
 
 def predictionExists(inBam) {
-    return Files.exists(inBam)
+    return Files.exists(predictionLocation(inBam))
 }
 
 process CHECK_KINETICS {
