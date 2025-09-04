@@ -93,13 +93,10 @@ micromamba activate nextflow
 Then run the pipeline
 ```
 nextflow run apduncan/bm-tk \
-# Or your custom profile from nextflow.config \
 -profile nbi_slurm \
-# This is where intermediate outputs will be stored \
 -work-dir /path/to/scratch \
-# Make a nice report of processes resource usage at the end \
 -with-report \
-# This must be a string, as the glob will be run by the pipeline \
+-r main \
 --bams "/glob/to/**/find*.bam"
 ```
 Do this on a node where it is okay to start long running jobs interactively,
