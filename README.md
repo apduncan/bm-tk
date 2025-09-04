@@ -16,7 +16,7 @@ output files.
 (`CHECK_KINETICS`)
 3. Predict 6ma base modification using [fibertools](https://fiberseq.github.io/fibertools/) (`PREDICT_FIBERTOOLS`)
 4. Extract modifications to table using [modkit](https://github.com/nanoporetech/modkit) (`EXTRACT_CALLS`).
-This extraction is optional, and is not done by default for space reasons. Enable by settting
+This extraction is optional, and is not done by default for space reasons. Enable by setting
 `--extract_calls true`.
 
 The default install of fibertools is from conda, and will not support use of
@@ -40,7 +40,7 @@ We will create a micromamba environment with nextflow installed, then
 nextflow will automatically create the environment required to run the
 processes.
 If the machines you run the pipeline on do not have internet access,
-see the later section on running without iternet access
+see the later section on running without internet access
 
 #### Install nextflow
 Run
@@ -56,7 +56,7 @@ environment.
 #### Pull the pipeline
 *(Optional)*. Nextflow can take a local copy of the pipeline to run.
 If your compute nodes have internet access, this step isn't strictly
-neccessary.
+necessary.
 ```
 nextflow pull apduncan/bm-tk -r main
 ```
@@ -75,7 +75,7 @@ This step isn't neccessary if you are in our group, the default should work.
 
 `nextflow.config` specifies profiles which give details for the submission
 system.
-It has defaults which work for our group, if you are using this elswhere you
+It has defaults which work for our group, if you are using this elsewhere you
 will need to customise this.
 Take a copy of the default config
 ```
