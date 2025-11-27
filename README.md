@@ -15,9 +15,11 @@ output files.
 2. Filter out any BAMS which do not contain the required kinetics tags 
 (`CHECK_KINETICS`)
 3. Predict 6ma base modification using [fibertools](https://fiberseq.github.io/fibertools/) (`PREDICT_FIBERTOOLS`)
-4. Extract modifications to table using [modkit](https://github.com/nanoporetech/modkit) (`EXTRACT_CALLS`).
-This extraction is optional, and is not done by default for space reasons. Enable by setting
-`--extract_calls true`.
+4. Extract modifications to table using a custom perl script (`EXTRACT_CALLS`).
+This currently only extracts modifications with a probability > 240 (~0.94).
+Currently this is a fixed threshold and cannot be changed.
+This extraction is done by default, but is optional.
+Disable by setting `--extract_calls false`.
 
 The default install of fibertools is from conda, and will not support use of
 the GPU.

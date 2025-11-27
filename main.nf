@@ -86,7 +86,8 @@ process PREDICT_FIBERTOOLS {
 }
 
 process EXTRACT_CALLS {
-    // Extract variant calls to a tabular format using modkit
+    // Extract variant calls to a tabular format using a custom perl script
+    // Script contributed by Rui Guan
     input:
         path modBam, arity: 1
     output:
@@ -108,14 +109,10 @@ process EXTRACT_CALLS {
         // exit code. To ensure failure is noticed, output to a temp file
         // before moving to expected output
         """
-        echo "Extracting calls with modkit"
-        modkit extract calls \
-        -t ${task.cpus} \
-        $modBam \
-        - \
-        | gzip > tmp.tsv.gz
-        echo "Moving calls table to output location"
-        mv tmp.tsv.gz ${modBam}.calls.tsv.gz
+        extract_calls.sh $modBam | \
+        extract_calls.pl | \
+        gzip > out.calls.tsv.gz.tmp
+        mv out.calls.tsv.gz.tmp ${modBam}.calls.tsv.gz
         """
 }
 
@@ -177,6 +174,6 @@ workflow {
 
     if(params.extract_calls) {
         newPredictions.mix(extPrediction) |
-        EXTRACT_CALLS
+        PERL_EXTRACT_CALLS
     }
 }
