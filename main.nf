@@ -174,6 +174,6 @@ workflow {
 
     if(params.extract_calls) {
         newPredictions.mix(extPrediction) |
-        PERL_EXTRACT_CALLS
+        EXTRACT_CALLS
     }
 }
