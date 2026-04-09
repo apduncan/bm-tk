@@ -11,11 +11,11 @@ def expectedOutputs(inBam) {
     // atypical way for Nextflow pipelines to work
     def ftPredict = Paths.get(
         inBam.getParent().toString(),
-        "fibertools_predict.${inBam.getName()}"
+        "jasmine_predict.${inBam.getName()}"
     )
     def calls = Paths.get(
         inBam.getParent().toString(),
-        "fibertools_predict.${inBam.getName()}.calls.tsv.gz"
+        "jasmine_predict.${inBam.getName()}.calls.tsv.gz"
     )
 
     return (
@@ -29,7 +29,7 @@ def predictionLocation(inBam) {
     def inFullPath = pathMap.get(inBam.getName())
     def outPath = Paths.get(
         inFullPath.getParent().toString(),
-        "fibertools_predict.${inBam.getName()}"
+        "jasmine_predict.${inBam.getName()}"
     )
     return outPath
 }
@@ -85,6 +85,36 @@ process PREDICT_FIBERTOOLS {
         """
 }
 
+process PREDICT_JASMINE {
+    // Run Jasmine to predict base modification
+    // Recommended by fibertools developers for standard Revio chemistry
+    // as also works well on older chemistries
+    input:
+        path unmodBam, arity: 1
+    output:
+        path "jasmine_predict.*.bam", arity: 1
+    publishDir "${params.outdir}", mode: 'copy', overwrite: true, saveAs: {
+        // Determine where to save this based on the input directory
+        def originalBase = it.toString().replace("jasmine_predict.", "")
+        def inFullPath = pathMap.get(originalBase.toString())
+        def outPath = Paths.get(
+            inFullPath.getParent().toString(),
+            it.toString()
+        )
+        return outPath
+    }
+    script:
+        """
+        jasmine \
+        $unmodBam jasmine_predict.$unmodBam \
+        --num-threads $task.cpus
+        """
+    stub:
+        """
+        touch jasmine_predict.$unmodBam
+        """
+}
+
 process EXTRACT_CALLS {
     // Extract variant calls to a tabular format using a custom perl script
     // Script contributed by Rui Guan
@@ -95,7 +125,7 @@ process EXTRACT_CALLS {
     publishDir "${params.outdir}", mode: 'copy', overwrite: true, saveAs: {
         // Determine where to save this based on the input directory
         def originalBase = it.toString()
-            .replace("fibertools_predict.", "")
+            .replace("jasmine_predict.", "")
             .replace(".calls.tsv.gz", "")
         def inFullPath = pathMap.get(originalBase.toString())
         def outPath = Paths.get(
@@ -166,14 +196,13 @@ workflow {
     
     // Make new predictions
     def newPredictions = hasKinetics.process |
-        PREDICT_FIBERTOOLS
+        PREDICT_JASMINE
     def extPrediction = hasKinetics.done |
-        view |
-        map { predictionLocation(it) } |
-        view
+        map { predictionLocation(it) }
 
     if(params.extract_calls) {
         newPredictions.mix(extPrediction) |
+        view |
         EXTRACT_CALLS
     }
 }

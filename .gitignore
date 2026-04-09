@@ -1,5 +1,7 @@
 work/
 test_data/
+stub_data/**/*predict*
 output/
 .nextflow*
 .nextflow/
+*.sif
