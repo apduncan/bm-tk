@@ -1,12 +1,13 @@
 # bm-tk
-Simple pipeline for predicting bacterial **b**ase **m**odification from PacBio HiFi
-sequencing data with kinetics tags.
+Simple pipeline for predicting bacterial **b**ase **m**odification in bulk 
+from PacBio HiFi sequencing data with kinetics tags.
 
 Currently the output design is to store the output BAMs alongside the input files,
-with the prefix `fibertools_predict.{input_bam}`. We implement a custom 
+with the prefix `jasmine_predict.{input_bam}`. We implement a custom 
 check for whether output already exists, and filter any inputs which have output
 files in the expected location. These will be logged by the pipeline. This behaviour
-can be disabled by setting `--clobber true`.
+can be disabled by setting `--clobber true`, which will force prediction to be
+rerun for all inputs.
 
 Currently, the pipeline will
 1. Filter out BAMs which seem irrelevant by name 
@@ -14,35 +15,27 @@ Currently, the pipeline will
 output files.
 2. Filter out any BAMS which do not contain the required kinetics tags 
 (`CHECK_KINETICS`)
-3. Predict 6ma base modification using [fibertools](https://fiberseq.github.io/fibertools/) (`PREDICT_FIBERTOOLS`)
+3. Predict 6mA, 5mC, and 5hmC base modification using [jasmine](https://github.com/PacificBiosciences/jasmine) (`PREDICT_JASMINE`)
 4. Extract modifications to table using a custom perl script (`EXTRACT_CALLS`).
 This currently only extracts modifications with a probability > 240 (~0.94).
 Currently this is a fixed threshold and cannot be changed.
 This extraction is done by default, but is optional.
 Disable by setting `--extract_calls false`.
 
-The default install of fibertools is from conda, and will not support use of
-the GPU.
-If you want to use GPU to improve speed of prediction, refer to the installation
-instructions in the fibertools documentation.
-
 ## Installation notes
-Installing fibertools with GPU features requires cmake, FindBin.pm, git.
-
 `samtools` should be available in the environment you launch the pipeline from.
 
-For our local use, currently it has been fast enough to run fibertools without
-the GPU, primarily due to time spent pending on the GPU partition.
-You may find it worthwhile install with GPU features if your GPUs are less
-in demand.
+### Running using slurm and either apptainer/singularity or micromamba
+This will show how to run the pipeline using either micromamba environments,
+or singularity/apptainer.
+In both cases, we create a micromamba environment with nextflow installed.
+You could install nextflow in a different way, the important element is to
+ensure that `samtools` and `nextflow` are available in the environment that
+will run `nextflow`.
 
-### Running using slurm and micromamba
-This will show how to run the pipeline using micromamba environments.
-We will create a micromamba environment with nextflow installed, then
-nextflow will automatically create the environment required to run the
-processes.
-If the machines you run the pipeline on do not have internet access,
-see the later section on running without internet access
+
+If the machines you run the pipeline on do not have internet access, see the 
+later section on running without internet access
 
 #### Install nextflow
 Run
@@ -60,10 +53,11 @@ environment.
 If your compute nodes have internet access, this step isn't strictly
 necessary.
 ```
-nextflow pull apduncan/bm-tk -r main
+nextflow pull apduncan/bm-tk -r v0.1
 ```
 This will pull the most recent commit to the main branch.
-You could also specify a commit hash.
+You could also specify a version tag (e.g. v0.1) or commit hash (e.g. 7097a95).
+
 
 #### Move to directory where you will run the pipeline
 Move to whichever directory you want pipeline logs and configuration to be
@@ -106,12 +100,66 @@ or put the above in a batch submission script.
 
 The pipeline should then run and produce your BAMs with predicted methylation.
 
+This defaults to using `apptainer`/`singularity` for execution.
+It will attempt to fetch the container image from the GitHub container registry 
+automatically.
+If there is no internet access on the machines runnning these processes,
+see the later section.
+Similarly, if you want to use `micromamba` or equivalents, see the section 
+below.
+
+### Using `micromamba`/`mamba`/`conda`
+Environments can be managed using `micromamba` or equivalents instead of
+containers.
+
+To use micromamba, you can edit the profile in the `nextflow.config` file 
+to:
+* Remove `apptainer.enabled = true` from the profile scope
+* Add `conda.enabled = true` to the profile scope
+* Add `conda.useMicromamba = true` to the profile scope
+
+It will look as follows:
+
+```
+profiles {
+    ...
+    nbi_slurm {
+        conda.enabled = true
+        conda.useMicromamba = true
+        process {
+...
+```
+
 ### Running without internet access
 The main obstacle to running without internet access is that nextflow will
-not be able to create the micromamba environment.
+not be able to pull the container or create the conda environment.
 However, we can do that on a node with internet access, then provide the path
 to the environment.
 
+#### `apptainer` or `singularity`
+All steps in the pipeline run using a single image, so the simplest method
+is to download this and provide a path to it at the command line.
+
+```
+apptainer pull bmtk-latest.sif bmtk-ghcr.io/apduncan/bm-tk:latest
+```
+
+The pipeline can then be run with
+
+```
+nextflow run apduncan/bm-tk \
+-with-apptainer bmtk-latest.sif \
+-profile nbi_slurm \
+-work-dir /path/to/scratch \
+-with-report \
+-r main \
+--bams "/glob/to/**/find*.bam"
+```
+
+The container path on the command line takes priority over the setting in
+`nextflow.config`, so it will use the image you pulled.
+
+#### `micromamba` or equivalent
 To create the environment, run
 ```
 curl https://raw.githubusercontent.com/apduncan/bm-tk/refs/heads/main/env.yaml > env.yaml && \

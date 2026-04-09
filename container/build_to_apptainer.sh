@@ -1,6 +1,6 @@
 echo "Copying repo env.yaml..."
 cp ../env.yaml env.yaml
-docker build -t bm-tk:latest -t bm-tk:0.1 .
+docker build -t bm-tk:latest -t bm-tk:0.1 -t ghcr.io/apduncan/bm-tk:0.1 -t ghcr.io/apduncan/bm-tk:latest .
 echo "Saving Docker image to tar file..."
 docker save bm-tk:0.1 -o bm-tk.tar
 echo "Building Apptainer image from Docker tar file..."

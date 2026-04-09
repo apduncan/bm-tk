@@ -161,7 +161,7 @@ workflow {
     def inputBranches = pathChannel |
         branch {
             done: !params.clobber && expectedOutputs(it)
-            filtered: (it =~/(fail)|(subread)|(scrap)|(unassigned)|(fibertools)/) 
+            filtered: (it =~/(fail)|(subread)|(scrap)|(unassigned)|(fibertools)|(jasmine)/) 
             process: true
         }
     
