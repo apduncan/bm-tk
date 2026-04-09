@@ -100,7 +100,7 @@ or put the above in a batch submission script.
 
 The pipeline should then run and produce your BAMs with predicted methylation.
 
-This defaults to using `apptainer`/`singularity` for execution.
+This defaults to using `singularity` for execution.
 It will attempt to fetch the container image from the GitHub container registry 
 automatically.
 If there is no internet access on the machines runnning these processes,
@@ -114,7 +114,7 @@ containers.
 
 To use micromamba, you can edit the profile in the `nextflow.config` file 
 to:
-* Remove `apptainer.enabled = true` from the profile scope
+* Remove `singularity.enabled = true` from the profile scope
 * Add `conda.enabled = true` to the profile scope
 * Add `conda.useMicromamba = true` to the profile scope
 
@@ -136,19 +136,21 @@ not be able to pull the container or create the conda environment.
 However, we can do that on a node with internet access, then provide the path
 to the environment.
 
-#### `apptainer` or `singularity`
+#### `singularity` or `apptainer`
 All steps in the pipeline run using a single image, so the simplest method
-is to download this and provide a path to it at the command line.
+is to download this and provide a path to it at the command line. To use 
+apptainer, simply substitute `apptainer` for `singularity` in the commands
+below.
 
 ```
-apptainer pull bmtk-latest.sif bmtk-ghcr.io/apduncan/bm-tk:latest
+singularity pull bmtk-latest.sif bmtk-ghcr.io/apduncan/bm-tk:latest
 ```
 
 The pipeline can then be run with
 
 ```
 nextflow run apduncan/bm-tk \
--with-apptainer bmtk-latest.sif \
+-with-singularity bmtk-latest.sif \
 -profile nbi_slurm \
 -work-dir /path/to/scratch \
 -with-report \
